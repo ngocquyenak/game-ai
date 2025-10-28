@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Xếp Từ Ngữ</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .game-area {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .words-container {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .words-container h3 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+            text-align: center;
+        }
+
+        .words-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+        }
+
+        .word-card {
+            background: linear-gradient(45deg, #ff6b6b, #ffa500);
+            color: white;
+            padding: 12px 8px;
+            border-radius: 10px;
+            text-align: center;
+            cursor: grab;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            user-select: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .word-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
+        .word-card:active {
+            cursor: grabbing;
+            transform: scale(0.95);
+        }
+
+        .categories-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .category {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            min-height: 300px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+
+        .category.drag-over {
+            background: #e8f5e8;
+            border: 3px dashed #4caf50;
+            transform: scale(1.02);
+        }
+
+        .category h3 {
+            color: #333;
+            margin-bottom: 15px;
+            text-align: center;
+            font-size: 1.2rem;
+            padding: 10px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 8px;
+            margin: -20px -20px 15px -20px;
+        }
+
+        .category-words {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-height: 200px;
+        }
+
+        .category .word-card {
+            background: linear-gradient(45deg, #4caf50, #45a049);
+            cursor: default;
+            margin: 0;
+        }
+
+        .category .word-card:hover {
+            transform: none;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #ff6b6b, #ffa500);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
+        .btn.check {
+            background: linear-gradient(45deg, #4caf50, #45a049);
+        }
+
+        .btn.reset {
+            background: linear-gradient(45deg, #f44336, #d32f2f);
+        }
+
+        .score {
+            text-align: center;
+            color: white;
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .message {
+            text-align: center;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-weight: 600;
+            display: none;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #c3e6cb;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 2px solid #f5c6cb;
+        }
+
+        .message.show {
+            display: block;
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .correct-answer {
+            animation: correctPulse 0.6s ease-in-out;
+        }
+
+        .wrong-answer {
+            animation: wrongShake 0.6s ease-in-out;
+        }
+
+        @keyframes correctPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); box-shadow: 0 0 20px #4caf50; }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes wrongShake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .screen-shake {
+            animation: screenShake 0.5s ease-in-out;
+        }
+
+        @keyframes screenShake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .celebration {
+            animation: celebration 2s ease-in-out;
+        }
+
+        @keyframes celebration {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            25% { transform: scale(1.05) rotate(2deg); }
+            50% { transform: scale(1.1) rotate(-2deg); }
+            75% { transform: scale(1.05) rotate(1deg); }
+        }
+
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: #ff6b6b;
+            animation: confetti-fall 3s linear infinite;
+            z-index: 1000;
+        }
+
+        @keyframes confetti-fall {
+            0% {
+                transform: translateY(-100vh) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .game-area {
+                grid-template-columns: 1fr;
+            }
+            
+            .categories-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .words-grid {
+                grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 Game Xếp Từ Ngữ</h1>
+            <p>Kéo thả các từ vào nhóm phù hợp</p>
+        </div>
+
+        <div class="score">
+            <span id="score">Điểm: 0/12</span>
+        </div>
+
+        <div class="message" id="message"></div>
+
+        <div class="controls">
+            <button class="btn check" onclick="checkAnswers()">✅ Kiểm tra</button>
+            <button class="btn reset" onclick="resetGame()">🔄 Chơi lại</button>
+        </div>
+
+        <div class="game-area">
+            <div class="words-container">
+                <h3>📝 Các từ cần xếp</h3>
+                <div class="words-grid" id="wordsGrid">
+                    <div class="word-card" draggable="true" data-word="mới" data-category="đặc điểm">mới</div>
+                    <div class="word-card" draggable="true" data-word="trong xanh" data-category="đặc điểm">trong xanh</div>
+                    <div class="word-card" draggable="true" data-word="quần áo" data-category="sự vật">quần áo</div>
+                    <div class="word-card" draggable="true" data-word="reo" data-category="hoạt động">reo</div>
+                    <div class="word-card" draggable="true" data-word="cười" data-category="hoạt động">cười</div>
+                    <div class="word-card" draggable="true" data-word="cặp sách" data-category="sự vật">cặp sách</div>
+                    <div class="word-card" draggable="true" data-word="trẻ" data-category="đặc điểm">trẻ</div>
+                    <div class="word-card" draggable="true" data-word="đo" data-category="hoạt động">đo</div>
+                    <div class="word-card" draggable="true" data-word="lớn" data-category="đặc điểm">lớn</div>
+                    <div class="word-card" draggable="true" data-word="bay" data-category="hoạt động">bay</div>
+                    <div class="word-card" draggable="true" data-word="lá cờ" data-category="sự vật">lá cờ</div>
+                    <div class="word-card" draggable="true" data-word="đỏ tươi" data-category="đặc điểm">đỏ tươi</div>
+                </div>
+            </div>
+
+            <div class="categories-container">
+                <div class="category" data-category="sự vật">
+                    <h3>🏠 Chỉ sự vật</h3>
+                    <div class="category-words" id="category-sự vật"></div>
+                </div>
+                <div class="category" data-category="hoạt động">
+                    <h3>🏃 Chỉ hoạt động</h3>
+                    <div class="category-words" id="category-hoạt động"></div>
+                </div>
+                <div class="category" data-category="đặc điểm">
+                    <h3>⭐ Chỉ đặc điểm</h3>
+                    <div class="category-words" id="category-đặc điểm"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let draggedElement = null;
+        let score = 0;
+        let totalWords = 12;
+
+        // Khởi tạo game
+        function initGame() {
+            const wordCards = document.querySelectorAll('.word-card');
+            const categories = document.querySelectorAll('.category');
+
+            // Thêm event listeners cho drag and drop
+            wordCards.forEach(card => {
+                card.addEventListener('dragstart', handleDragStart);
+                card.addEventListener('dragend', handleDragEnd);
+            });
+
+            categories.forEach(category => {
+                category.addEventListener('dragover', handleDragOver);
+                category.addEventListener('drop', handleDrop);
+                category.addEventListener('dragenter', handleDragEnter);
+                category.addEventListener('dragleave', handleDragLeave);
+            });
+
+            updateScore();
+        }
+
+        function handleDragStart(e) {
+            draggedElement = this;
+            this.style.opacity = '0.5';
+        }
+
+        function handleDragEnd(e) {
+            this.style.opacity = '1';
+            draggedElement = null;
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+        }
+
+        function handleDragEnter(e) {
+            e.preventDefault();
+            this.classList.add('drag-over');
+        }
+
+        function handleDragLeave(e) {
+            this.classList.remove('drag-over');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            this.classList.remove('drag-over');
+            
+            if (draggedElement) {
+                const categoryWords = this.querySelector('.category-words');
+                const clonedElement = draggedElement.cloneNode(true);
+                
+                // Xóa draggable và thêm class cho từ đã xếp
+                clonedElement.draggable = false;
+                clonedElement.style.cursor = 'default';
+                
+                // Thêm vào category
+                categoryWords.appendChild(clonedElement);
+                
+                // Xóa từ khỏi danh sách gốc
+                draggedElement.remove();
+                
+                updateScore();
+            }
+        }
+
+        function updateScore() {
+            const remainingWords = document.querySelectorAll('#wordsGrid .word-card').length;
+            const placedWords = totalWords - remainingWords;
+            score = placedWords;
+            document.getElementById('score').textContent = `Điểm: ${score}/${totalWords}`;
+        }
+
+        function checkAnswers() {
+            let correctCount = 0;
+            let totalPlaced = 0;
+            const categories = document.querySelectorAll('.category');
+            
+            categories.forEach(category => {
+                const categoryType = category.dataset.category;
+                const wordsInCategory = category.querySelectorAll('.word-card');
+                
+                wordsInCategory.forEach(word => {
+                    totalPlaced++;
+                    const correctCategory = word.dataset.category;
+                    if (correctCategory === categoryType) {
+                        correctCount++;
+                        word.style.background = 'linear-gradient(45deg, #4caf50, #45a049)';
+                        // Hiệu ứng cho câu đúng
+                        word.classList.add('correct-answer');
+                        setTimeout(() => word.classList.remove('correct-answer'), 1000);
+                    } else {
+                        word.style.background = 'linear-gradient(45deg, #f44336, #d32f2f)';
+                        // Hiệu ứng cho câu sai
+                        word.classList.add('wrong-answer');
+                        setTimeout(() => word.classList.remove('wrong-answer'), 1000);
+                    }
+                });
+            });
+
+            const message = document.getElementById('message');
+            message.classList.remove('success', 'error');
+            
+            if (totalPlaced === 0) {
+                showMessage('Hãy xếp ít nhất một từ vào nhóm!', 'error');
+                triggerScreenShake();
+            } else if (correctCount === totalPlaced && totalPlaced === totalWords) {
+                showMessage(`🎉 Xuất sắc! Bạn đã xếp đúng tất cả ${correctCount}/${totalWords} từ!`, 'success');
+                triggerCelebration();
+            } else if (correctCount === totalPlaced) {
+                showMessage(`✅ Tuyệt vời! ${correctCount}/${totalPlaced} từ đã xếp đúng. Hãy xếp thêm các từ còn lại!`, 'success');
+                triggerSuccessEffect();
+            } else {
+                showMessage(`📝 Bạn xếp đúng ${correctCount}/${totalPlaced} từ. Màu xanh là đúng, màu đỏ là sai. Thử lại nhé!`, 'error');
+                triggerErrorEffect();
+            }
+        }
+
+        function showMessage(text, type) {
+            const message = document.getElementById('message');
+            message.textContent = text;
+            message.classList.add(type, 'show');
+            
+            setTimeout(() => {
+                message.classList.remove('show');
+            }, 4000);
+        }
+
+        function resetGame() {
+            // Xóa tất cả từ trong categories
+            const categoryWords = document.querySelectorAll('.category-words');
+            categoryWords.forEach(container => {
+                container.innerHTML = '';
+            });
+
+            // Tạo lại danh sách từ gốc
+            const wordsGrid = document.getElementById('wordsGrid');
+            wordsGrid.innerHTML = `
+                <div class="word-card" draggable="true" data-word="mới" data-category="đặc điểm">mới</div>
+                <div class="word-card" draggable="true" data-word="trong xanh" data-category="đặc điểm">trong xanh</div>
+                <div class="word-card" draggable="true" data-word="quần áo" data-category="sự vật">quần áo</div>
+                <div class="word-card" draggable="true" data-word="reo" data-category="hoạt động">reo</div>
+                <div class="word-card" draggable="true" data-word="cười" data-category="hoạt động">cười</div>
+                <div class="word-card" draggable="true" data-word="cặp sách" data-category="sự vật">cặp sách</div>
+                <div class="word-card" draggable="true" data-word="trẻ" data-category="đặc điểm">trẻ</div>
+                <div class="word-card" draggable="true" data-word="đo" data-category="hoạt động">đo</div>
+                <div class="word-card" draggable="true" data-word="lớn" data-category="đặc điểm">lớn</div>
+                <div class="word-card" draggable="true" data-word="bay" data-category="hoạt động">bay</div>
+                <div class="word-card" draggable="true" data-word="lá cờ" data-category="sự vật">lá cờ</div>
+                <div class="word-card" draggable="true" data-word="đỏ tươi" data-category="đặc điểm">đỏ tươi</div>
+            `;
+
+            // Ẩn message
+            document.getElementById('message').classList.remove('show');
+            
+            // Khởi tạo lại game
+            initGame();
+        }
+
+        // Tạo âm thanh cho câu đúng (tiếng chuông vui vẻ)
+        function playCorrectSound() {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            
+            // Tạo chuỗi nốt nhạc vui vẻ (C-E-G)
+            const notes = [523.25, 659.25, 783.99]; // C5, E5, G5
+            
+            notes.forEach((frequency, index) => {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+                oscillator.type = 'sine';
+                
+                gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.01);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                
+                oscillator.start(audioContext.currentTime + index * 0.1);
+                oscillator.stop(audioContext.currentTime + 0.3 + index * 0.1);
+            });
+        }
+
+        // Tạo âm thanh cho câu sai (tiếng buzz)
+        function playWrongSound() {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.setValueAtTime(200, audioContext.currentTime);
+            oscillator.frequency.linearRampToValueAtTime(150, audioContext.currentTime + 0.3);
+            oscillator.type = 'sawtooth';
+            
+            gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.4, audioContext.currentTime + 0.01);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.3);
+        }
+
+        // Tạo âm thanh chiến thắng (fanfare)
+        function playVictorySound() {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            
+            // Tạo giai điệu chiến thắng
+            const melody = [
+                {freq: 523.25, time: 0},    // C5
+                {freq: 659.25, time: 0.2},  // E5
+                {freq: 783.99, time: 0.4},  // G5
+                {freq: 1046.5, time: 0.6}   // C6
+            ];
+            
+            melody.forEach(note => {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.setValueAtTime(note.freq, audioContext.currentTime);
+                oscillator.type = 'triangle';
+                
+                gainNode.gain.setValueAtTime(0, audioContext.currentTime + note.time);
+                gainNode.gain.linearRampToValueAtTime(0.4, audioContext.currentTime + note.time + 0.01);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + note.time + 0.4);
+                
+                oscillator.start(audioContext.currentTime + note.time);
+                oscillator.stop(audioContext.currentTime + note.time + 0.4);
+            });
+        }
+
+        // Hiệu ứng rung màn hình
+        function triggerScreenShake() {
+            document.body.classList.add('screen-shake');
+            setTimeout(() => document.body.classList.remove('screen-shake'), 500);
+            playWrongSound();
+        }
+
+        // Hiệu ứng ăn mừng
+        function triggerCelebration() {
+            document.querySelector('.container').classList.add('celebration');
+            setTimeout(() => document.querySelector('.container').classList.remove('celebration'), 2000);
+            createConfetti();
+            playVictorySound();
+        }
+
+        // Hiệu ứng thành công
+        function triggerSuccessEffect() {
+            playCorrectSound();
+        }
+
+        // Hiệu ứng lỗi
+        function triggerErrorEffect() {
+            playWrongSound();
+        }
+
+        // Tạo hiệu ứng pháo hoa
+        function createConfetti() {
+            const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57', '#ff9ff3'];
+            
+            for (let i = 0; i < 50; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + 'vw';
+                    confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.animationDelay = Math.random() * 3 + 's';
+                    
+                    document.body.appendChild(confetti);
+                    
+                    setTimeout(() => {
+                        confetti.remove();
+                    }, 3000);
+                }, i * 50);
+            }
+        }
+
+        // Khởi tạo game khi trang load
+        document.addEventListener('DOMContentLoaded', initGame);
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'995b824cc79dfdca',t:'MTc2MTY2NTc4OS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
